@@ -3,6 +3,8 @@ package shortener
 import (
 	"errors"
 	"sync"
+
+	"github.com/mcandeia/url-shortener/pkg/state"
 )
 
 var (
@@ -20,11 +22,12 @@ var (
 )
 
 // InitFactory initializes the engine factories.
-func InitFactory() {
+func InitFactory(state state.Store) {
 	factoryInit.Do(func() {
 		engineInst = map[EngineID]Engine{
-			Base64: NewBase64(),
-			Noop:   NewNoop(),
+			Base64:   NewBase64(),
+			Noop:     NewNoop(),
+			Aliasing: NewAliasing(state),
 		}
 	})
 }

@@ -1,6 +1,7 @@
 package api
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"net/url"
@@ -25,8 +26,10 @@ type ShortenResponse struct {
 const (
 	// engineQ is the engine query string specified.
 	engineQ = "e"
+	// aliasQ is the engine query string for alising.
+	aliasQ = "alias"
 	// defaultEngine is the default engine to be used.
-	defaultEngine = shortener.Base64
+	defaultEngine = shortener.Aliasing
 	// locationHeader is the location header.
 	location = "location"
 )
@@ -91,7 +94,9 @@ func Shorten() gin.HandlerFunc {
 			return
 		}
 
-		short, err := engine.Short(validURL.String())
+		short, err := engine.Short(
+			context.WithValue(ctx.Request.Context(), shortener.AliasKey, ctx.Query(aliasQ)), validURL.String(),
+		)
 
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, httpErr(err.Error()))
@@ -117,7 +122,7 @@ func Redirect() gin.HandlerFunc {
 			return
 		}
 
-		long, err := engine.Long(ctx.Param("short"))
+		long, err := engine.Long(ctx.Request.Context(), ctx.Param("short"))
 
 		if err != nil {
 			ctx.JSON(http.StatusBadRequest, httpErr(err.Error()))
